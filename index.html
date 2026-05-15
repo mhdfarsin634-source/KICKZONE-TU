@@ -6,6 +6,8 @@
     <title>KICKZONE | Official Booking</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root { 
             --primary: #2ecc71; 
@@ -50,7 +52,6 @@
             font-size: 18px; margin-bottom: 25px; outline: none; box-sizing: border-box;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
-        input[type="date"]:focus { border-color: var(--primary); }
 
         /* Booking Slots */
         .slots-container { display: grid; gap: 12px; }
@@ -78,7 +79,7 @@
         }
         .admin-active .btn-action { display: block; }
 
-        /* PROFESSIONAL FLOATING SOCIAL BAR */
+        /* PROFESSIONAL FLOATING SOCIAL BAR WITH ICONS */
         .social-bar {
             position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 380px; background: rgba(30, 30, 30, 0.85);
@@ -89,13 +90,13 @@
         }
         .social-item { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .icon-circle {
-            width: 38px; height: 38px; border-radius: 50%; 
+            width: 42px; height: 42px; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; color: white; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-size: 16px;
+            color: white; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 20px;
         }
         .social-label { font-size: 9px; color: #888; font-weight: 700; text-transform: uppercase; }
-        .social-item:hover .icon-circle { transform: scale(1.2) translateY(-5px); }
+        .social-item:hover .icon-circle { transform: scale(1.1) translateY(-5px); }
     </style>
 </head>
 <body>
@@ -118,21 +119,27 @@
 
 <div class="social-bar">
     <a href="https://chat.whatsapp.com/JOVOSsRttwrK5mTFlx2D6I?mode=gi_t" target="_blank" class="social-item">
-        <div class="icon-circle" style="background: var(--wa);">W</div>
+        <div class="icon-circle" style="background: var(--wa);">
+            <i class="fab fa-whatsapp"></i>
+        </div>
         <span class="social-label">Group</span>
     </a>
     <a href="https://www.instagram.com/kickzone_turf_?igsh=MW42ejNxbjdxbGlxbg==" target="_blank" class="social-item">
-        <div class="icon-circle" style="background: var(--ig);">I</div>
+        <div class="icon-circle" style="background: var(--ig);">
+            <i class="fab fa-instagram"></i>
+        </div>
         <span class="social-label">Instagram</span>
     </a>
     <a href="https://www.youtube.com/@kickzone_turf" target="_blank" class="social-item">
-        <div class="icon-circle" style="background: var(--yt);">Y</div>
+        <div class="icon-circle" style="background: var(--yt);">
+            <i class="fab fa-youtube"></i>
+        </div>
         <span class="social-label">YouTube</span>
     </a>
 </div>
 
 <script>
-    // 1. FIREBASE SETUP
+    // FIREBASE SETUP
     const firebaseConfig = { databaseURL: "https://kickzone-turf-default-rtdb.asia-southeast1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -140,7 +147,6 @@
     let isAdmin = false;
     const adminPIN = "8590"; 
 
-    // Handle Date Logic
     const datePicker = document.getElementById('datePicker');
     const todayStr = new Date().toISOString().split('T')[0];
     datePicker.value = todayStr;
@@ -154,7 +160,6 @@
             btn.innerText = "ADMIN ACTIVE";
             btn.style.background = "var(--primary)";
             btn.style.color = "black";
-            btn.style.fontWeight = "bold";
         }
     }
 
