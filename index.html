@@ -3,84 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KICKZONE | Pro Booking</title>
+    <title>KICKZONE | Official Booking</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
         :root { 
             --primary: #2ecc71; 
-            --dark: #1a1a1a; 
-            --danger: #e74c3c; 
+            --dark-bg: #0a0a0a; 
+            --card-bg: #161616;
+            --danger: #ff4757; 
             --text: #ffffff;
-            --surface: #1e1e1e;
+            --wa: #25D366;
+            --ig: #E1306C;
+            --yt: #FF0000;
         }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #121212; color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
         
-        .container { background: var(--dark); padding: 20px; border-radius: 20px; width: 100%; max-width: 480px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { color: var(--primary); margin: 0; font-size: 36px; letter-spacing: 3px; font-weight: 800; }
-        
-        .admin-lock { display: flex; justify-content: flex-end; margin-bottom: 15px; }
-        #adminBtn { background: #252525; border: 1px solid #444; color: #777; font-size: 10px; cursor: pointer; border-radius: 6px; padding: 6px 12px; transition: 0.3s; }
-        
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--dark-bg); color: var(--text); 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 20px 15px 120px 15px; margin: 0; 
+        }
+
+        .container { width: 100%; max-width: 450px; }
+
+        /* Header & Brand */
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { 
+            color: var(--primary); margin: 0; font-size: 42px; 
+            font-weight: 900; letter-spacing: -1.5px; font-style: italic;
+        }
+        .header p { color: #555; margin: 5px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; font-weight: 700; }
+
+        /* Admin / Staff Toggle */
+        .admin-section { display: flex; justify-content: flex-end; margin-bottom: 15px; }
+        #adminBtn { 
+            background: #222; border: 1px solid #333; color: #666; 
+            padding: 8px 14px; border-radius: 10px; font-size: 11px; cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        /* Modern Date Input */
         input[type="date"] { 
-            width: 100%; padding: 15px; background: #222; border: 2px solid #333; border-radius: 12px; 
-            color: white; font-size: 18px; margin-bottom: 20px; outline: none; box-sizing: border-box;
-            transition: border-color 0.3s;
+            width: 100%; padding: 18px; background: var(--card-bg); 
+            border: 1px solid #2a2a2a; border-radius: 15px; color: white; 
+            font-size: 18px; margin-bottom: 25px; outline: none; box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
         input[type="date"]:focus { border-color: var(--primary); }
 
+        /* Booking Slots */
         .slots-container { display: grid; gap: 12px; }
-        
         .slot { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 18px; border-radius: 14px; background: var(--surface); 
-            border-left: 6px solid var(--primary); transition: 0.2s;
+            padding: 22px; border-radius: 18px; background: var(--card-bg);
+            border: 1px solid #222; transition: transform 0.2s;
         }
-        
-        /* State Variations */
-        .slot.booked { border-left-color: var(--danger); background: #2a2a2a; opacity: 0.9; }
-        .slot.past { border-left-color: #555; opacity: 0.5; pointer-events: none; }
-        .slot.live { border-left-color: #3498db; box-shadow: 0 0 15px rgba(52, 152, 219, 0.2); }
+        .slot.booked { border-left: 6px solid var(--danger); background: #1f1f1f; }
+        .slot.available { border-left: 6px solid var(--primary); }
 
-        .time-label { font-size: 16px; font-weight: 600; display: block; }
-        .status-label { font-size: 12px; font-weight: bold; margin-top: 4px; text-transform: uppercase; }
-        .customer-name { font-size: 11px; color: #aaa; margin-top: 2px; font-style: italic; }
+        .time-text { font-size: 18px; font-weight: 800; display: block; }
+        .status-badge { 
+            font-size: 10px; font-weight: 900; padding: 4px 10px; 
+            border-radius: 6px; margin-top: 8px; display: inline-block; letter-spacing: 1px;
+        }
+        .available .status-badge { background: rgba(46, 204, 113, 0.15); color: var(--primary); }
+        .booked .status-badge { background: rgba(255, 71, 87, 0.15); color: var(--danger); }
 
+        /* Admin Confirm/Cancel Buttons */
         .btn-action { 
-            padding: 10px 20px; border: none; border-radius: 25px; 
-            font-weight: bold; cursor: pointer; display: none; 
-            font-size: 12px; transition: transform 0.1s; 
+            padding: 12px 20px; border: none; border-radius: 12px; 
+            font-weight: 800; cursor: pointer; display: none; font-size: 13px;
+            text-transform: uppercase;
         }
         .admin-active .btn-action { display: block; }
-        .btn-action:active { transform: scale(0.9); }
-        
-        .btn-confirm { background: var(--primary); color: #000; }
-        .btn-cancel { background: var(--danger); color: #fff; }
 
-        /* Animation for available slots */
-        .slot:not(.booked):not(.past) .status-label { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        /* PROFESSIONAL FLOATING SOCIAL BAR */
+        .social-bar {
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 380px; background: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 30px; 
+            padding: 12px 10px; display: flex; justify-content: space-around; 
+            align-items: center; box-shadow: 0 15px 35px rgba(0,0,0,0.6); z-index: 9999;
+        }
+        .social-item { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .icon-circle {
+            width: 38px; height: 38px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; color: white; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 16px;
+        }
+        .social-label { font-size: 9px; color: #888; font-weight: 700; text-transform: uppercase; }
+        .social-item:hover .icon-circle { transform: scale(1.2) translateY(-5px); }
     </style>
 </head>
 <body>
 
 <div class="container" id="mainContainer">
-    <div class="admin-lock">
+    <div class="admin-section">
         <button id="adminBtn" onclick="unlockAdmin()">STAFF LOGIN</button>
     </div>
+
     <div class="header">
         <h1>KICKZONE</h1>
-        <div id="liveIndicator" style="font-size: 12px; color: #666; margin-top: 5px;">LIVE AVAILABILITY</div>
+        <p>Football & Cricket Turf</p>
     </div>
-    
+
     <input type="date" id="datePicker">
-    <div id="slotsDisplay" class="slots-container">Initializing System...</div>
+    
+    <div id="slotsDisplay" class="slots-container">
+        </div>
+</div>
+
+<div class="social-bar">
+    <a href="https://chat.whatsapp.com/JOVOSsRttwrK5mTFlx2D6I?mode=gi_t" target="_blank" class="social-item">
+        <div class="icon-circle" style="background: var(--wa);">W</div>
+        <span class="social-label">Group</span>
+    </a>
+    <a href="https://www.instagram.com/kickzone_turf_?igsh=MW42ejNxbjdxbGlxbg==" target="_blank" class="social-item">
+        <div class="icon-circle" style="background: var(--ig);">I</div>
+        <span class="social-label">Instagram</span>
+    </a>
+    <a href="https://www.youtube.com/@kickzone_turf" target="_blank" class="social-item">
+        <div class="icon-circle" style="background: var(--yt);">Y</div>
+        <span class="social-label">YouTube</span>
+    </a>
 </div>
 
 <script>
-    // 1. CONFIG
+    // 1. FIREBASE SETUP
     const firebaseConfig = { databaseURL: "https://kickzone-turf-default-rtdb.asia-southeast1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -88,69 +140,54 @@
     let isAdmin = false;
     const adminPIN = "8590"; 
 
-    // Set Date Constraints
+    // Handle Date Logic
     const datePicker = document.getElementById('datePicker');
     const todayStr = new Date().toISOString().split('T')[0];
     datePicker.value = todayStr;
-    datePicker.setAttribute('min', todayStr); // Prevent past dates
+    datePicker.setAttribute('min', todayStr);
 
     function unlockAdmin() {
-        const pass = prompt("Enter Staff PIN:");
-        if (pass === adminPIN) {
+        if (prompt("Kickzone Staff PIN:") === adminPIN) {
             isAdmin = true;
-            document.getElementById('mainContainer').classList.add('admin-active');
-            document.getElementById('adminBtn').innerText = "STAFF LOGGED IN";
-            document.getElementById('adminBtn').style.borderColor = "var(--primary)";
-        } else {
-            alert("Access Denied.");
+            document.body.classList.add('admin-active');
+            const btn = document.getElementById('adminBtn');
+            btn.innerText = "ADMIN ACTIVE";
+            btn.style.background = "var(--primary)";
+            btn.style.color = "black";
+            btn.style.fontWeight = "bold";
         }
     }
 
     function syncData() {
-        const selectedDate = datePicker.value;
-        db.ref('bookings/' + selectedDate).on('value', (snapshot) => {
-            renderSlots(snapshot.val() || {}, selectedDate);
+        const date = datePicker.value;
+        db.ref('bookings/' + date).on('value', (snap) => {
+            render(snap.val() || {}, date);
         });
     }
 
-    function renderSlots(bookedData, selectedDate) {
+    function render(bookedData, selectedDate) {
         const display = document.getElementById('slotsDisplay');
         display.innerHTML = '';
         
-        const now = new Date();
-        const currentHour = now.getHours();
-        const isToday = selectedDate === todayStr;
-
         for (let h = 6; h < 24; h++) {
             const timeKey = h + ":00";
-            const booking = bookedData[timeKey]; // Now expects an object {name: "..."} or null
+            const booking = bookedData[timeKey];
             const isBooked = !!booking;
             
-            // Format Time Display
             const startH = h > 12 ? h-12 : h;
             const ampm = h >= 12 ? 'PM' : 'AM';
-            const endH = (h+1) > 12 ? (h+1)-12 : (h+1);
-            const endAmpm = (h+1) >= 12 && (h+1) < 24 ? 'PM' : 'AM';
-
-            // Logic States
-            const isPast = isToday && h < currentHour;
-            const isLive = isToday && h === currentHour;
 
             const slotDiv = document.createElement('div');
-            slotDiv.className = `slot ${isBooked ? 'booked' : ''} ${isPast ? 'past' : ''} ${isLive ? 'live' : ''}`;
-            
+            slotDiv.className = `slot ${isBooked ? 'booked' : 'available'}`;
             slotDiv.innerHTML = `
                 <div>
-                    <span class="time-label">${startH} ${ampm} - ${endH} ${endAmpm}</span>
-                    <span class="status-label" style="color:${isBooked ? 'var(--danger)' : 'var(--primary)'}">
-                        ${isBooked ? '● Occupied' : '○ Available'} 
-                        ${isLive ? '<span style="color:#3498db; margin-left:10px;">[NOW]</span>' : ''}
-                    </span>
-                    ${(isBooked && isAdmin) ? `<div class="customer-name">Client: ${booking.name || 'Anonymous'}</div>` : ''}
+                    <span class="time-text">${startH}:00 ${ampm}</span>
+                    <span class="status-badge">${isBooked ? 'OCCUPIED' : 'OPEN'}</span>
+                    ${(isBooked && isAdmin) ? `<div style="font-size:11px; color:#aaa; margin-top:8px;">Client: ${booking.name || 'Staff Entry'}</div>` : ''}
                 </div>
-                <button class="btn-action ${isBooked ? 'btn-cancel' : 'btn-confirm'}" 
+                <button class="btn-action" style="background:${isBooked ? 'var(--danger)' : 'var(--primary)'}" 
                         onclick="toggle('${selectedDate}', '${timeKey}', ${isBooked})">
-                    ${isBooked ? 'Clear' : 'Book'}
+                    ${isBooked ? 'Clear' : 'Confirm'}
                 </button>`;
             display.appendChild(slotDiv);
         }
@@ -158,19 +195,12 @@
 
     function toggle(date, time, isBooked) {
         if (!isAdmin) return;
-        
+        const ref = db.ref('bookings/' + date + '/' + time);
         if (isBooked) {
-            if(confirm("Cancel this booking?")) {
-                db.ref('bookings/' + date + '/' + time).set(null);
-            }
+            if(confirm("Cancel this booking?")) ref.set(null);
         } else {
-            const client = prompt("Enter Customer Name:");
-            if (client) {
-                db.ref('bookings/' + date + '/' + time).set({
-                    name: client,
-                    timestamp: Date.now()
-                });
-            }
+            const name = prompt("Enter Booking Name:");
+            if(name) ref.set({ name: name, time: Date.now() });
         }
     }
 
