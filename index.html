@@ -21,7 +21,7 @@
         }
         
         body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
             background: var(--dark-bg); color: var(--text); 
             display: flex; flex-direction: column; align-items: center; 
             padding: 20px 15px 120px 15px; margin: 0; 
@@ -30,18 +30,11 @@
         .container { width: 100%; max-width: 450px; }
 
         .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { 
-            color: var(--primary); margin: 0; font-size: 42px; 
-            font-weight: 900; letter-spacing: -1.5px; font-style: italic;
-        }
-        .header p { color: #555; margin: 5px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; font-weight: 700; }
+        .header h1 { color: var(--primary); margin: 0; font-size: 42px; font-weight: 900; font-style: italic; }
+        .header p { color: #555; margin: 5px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; }
 
         .admin-section { display: flex; justify-content: flex-end; margin-bottom: 15px; }
-        #adminBtn { 
-            background: #222; border: 1px solid #333; color: #666; 
-            padding: 8px 14px; border-radius: 10px; font-size: 11px; cursor: pointer;
-            transition: all 0.3s;
-        }
+        #adminBtn { background: #222; border: 1px solid #333; color: #666; padding: 8px 14px; border-radius: 10px; font-size: 11px; cursor: pointer; }
 
         input[type="date"] { 
             width: 100%; padding: 18px; background: var(--card-bg); 
@@ -58,27 +51,21 @@
         .slot.booked { border-left: 6px solid var(--danger); }
         .slot.available { border-left: 6px solid var(--primary); }
 
-        .time-text { font-size: 16px; font-weight: 800; display: block; letter-spacing: 0.5px; }
-        .status-badge { 
-            font-size: 10px; font-weight: 900; padding: 4px 10px; 
-            border-radius: 6px; margin-top: 8px; display: inline-block;
-        }
+        .time-text { font-size: 17px; font-weight: 800; display: block; letter-spacing: 0.5px; text-transform: lowercase; }
+        .status-badge { font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 6px; margin-top: 8px; display: inline-block; }
         .available .status-badge { background: rgba(46, 204, 113, 0.1); color: var(--primary); }
         .booked .status-badge { background: rgba(255, 71, 87, 0.1); color: var(--danger); }
 
-        .btn-action { 
-            padding: 12px 18px; border: none; border-radius: 12px; 
-            font-weight: 800; cursor: pointer; display: none; font-size: 12px;
-        }
+        .btn-action { padding: 12px 18px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: none; font-size: 12px; }
         .admin-active .btn-action { display: block; }
 
-        /* SOCIAL BAR */
         .social-bar {
             position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 380px; background: rgba(30, 30, 30, 0.85);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-radius: 30px; padding: 12px 10px; display: flex; 
-            justify-content: space-around; align-items: center; z-index: 9999;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; 
+            padding: 12px 10px; display: flex; justify-content: space-around; 
+            align-items: center; box-shadow: 0 15px 35px rgba(0,0,0,0.6); z-index: 9999;
         }
         .social-item { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .icon-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
@@ -91,14 +78,11 @@
     <div class="admin-section">
         <button id="adminBtn" onclick="unlockAdmin()">STAFF LOGIN</button>
     </div>
-
     <div class="header">
         <h1>KICKZONE</h1>
-        <p>Premium Turf Booking</p>
+        <p>Football & Cricket Turf</p>
     </div>
-
     <input type="date" id="datePicker">
-    
     <div id="slotsDisplay" class="slots-container"></div>
 </div>
 
@@ -132,15 +116,22 @@
         if (prompt("Staff PIN:") === adminPIN) {
             isAdmin = true;
             document.body.classList.add('admin-active');
-            document.getElementById('adminBtn').innerText = "ADMIN MODE";
+            document.getElementById('adminBtn').innerText = "ADMIN ACTIVE";
+            document.getElementById('adminBtn').style.background = "var(--primary)";
+            document.getElementById('adminBtn').style.color = "black";
         }
     }
 
+    // Updated Time Formatter for "9 am to 10 am" style
     function formatTime(h) {
         let hour = h % 24;
-        let ampm = hour >= 12 ? 'PM' : 'AM';
+        let ampm = (hour >= 12 && hour < 24) ? 'pm' : 'am';
         let displayHour = hour % 12 || 12;
-        return `${displayHour}:00 ${ampm}`;
+        if (h === 24) {
+            displayHour = 12;
+            ampm = 'am';
+        }
+        return `${displayHour} ${ampm}`;
     }
 
     function syncData() {
@@ -153,8 +144,7 @@
         const display = document.getElementById('slotsDisplay');
         display.innerHTML = '';
         
-        // Loop through 24 hours
-        for (let h = 0; h < 24; h++) {
+        for (let h = 6; h < 24; h++) {
             const timeKey = `${h}:00`;
             const booking = bookedData[timeKey];
             const isBooked = !!booking;
@@ -163,9 +153,9 @@
             slotDiv.className = `slot ${isBooked ? 'booked' : 'available'}`;
             slotDiv.innerHTML = `
                 <div>
-                    <span class="time-text">${formatTime(h)} - ${formatTime(h + 1)}</span>
-                    <span class="status-badge">${isBooked ? 'BOOKED' : 'AVAILABLE'}</span>
-                    ${(isBooked && isAdmin) ? `<div style="font-size:11px; color:#aaa; margin-top:5px;">Name: ${booking.name}</div>` : ''}
+                    <span class="time-text">${formatTime(h)} to ${formatTime(h + 1)}</span>
+                    <span class="status-badge">${isBooked ? 'OCCUPIED' : 'AVAILABLE'}</span>
+                    ${(isBooked && isAdmin) ? `<div style="font-size:11px; color:#aaa; margin-top:8px;">Client: ${booking.name}</div>` : ''}
                 </div>
                 <button class="btn-action" style="background:${isBooked ? 'var(--danger)' : 'var(--primary)'}" 
                         onclick="toggle('${timeKey}', ${isBooked})">
@@ -179,10 +169,10 @@
         if (!isAdmin) return;
         const ref = db.ref('bookings/' + datePicker.value + '/' + time);
         if (isBooked) {
-            if(confirm("Cancel?")) ref.set(null);
+            if(confirm("Cancel this booking?")) ref.set(null);
         } else {
-            const name = prompt("Name:");
-            if(name) ref.set({ name: name });
+            const name = prompt("Customer Name:");
+            if(name) ref.set({ name: name, timestamp: Date.now() });
         }
     }
 
