@@ -3,34 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KICKZONE | Booking Status</title>
+    <title>KICKZONE | Pro Booking</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #2ecc71; --dark: #1a1a1a; --danger: #e74c3c; --text: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
-        .container { background: var(--dark); padding: 20px; border-radius: 15px; width: 100%; max-width: 450px; border: 1px solid #333; box-sizing: border-box; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .header h1 { color: var(--primary); margin: 0; font-size: 32px; letter-spacing: 2px; }
+        :root { 
+            --primary: #2ecc71; 
+            --dark: #1a1a1a; 
+            --danger: #e74c3c; 
+            --text: #ffffff;
+            --surface: #1e1e1e;
+        }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #121212; color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
         
-        .admin-lock { text-align: right; margin-bottom: 10px; }
-        #adminBtn { background: #222; border: 1px solid #444; color: #888; font-size: 11px; cursor: pointer; border-radius: 4px; padding: 5px 10px; }
+        .container { background: var(--dark); padding: 20px; border-radius: 20px; width: 100%; max-width: 480px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        input[type="date"] { width: 100%; padding: 12px; background: #222; border: 1px solid #444; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 20px; outline: none; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: var(--primary); margin: 0; font-size: 36px; letter-spacing: 3px; font-weight: 800; }
+        
+        .admin-lock { display: flex; justify-content: flex-end; margin-bottom: 15px; }
+        #adminBtn { background: #252525; border: 1px solid #444; color: #777; font-size: 10px; cursor: pointer; border-radius: 6px; padding: 6px 12px; transition: 0.3s; }
+        
+        input[type="date"] { 
+            width: 100%; padding: 15px; background: #222; border: 2px solid #333; border-radius: 12px; 
+            color: white; font-size: 18px; margin-bottom: 20px; outline: none; box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
         input[type="date"]:focus { border-color: var(--primary); }
 
-        .slots-container { display: grid; gap: 10px; }
-        .slot { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-radius: 10px; background: #1e1e1e; border-left: 6px solid var(--primary); transition: 0.3s; }
-        .booked { border-left-color: var(--danger); background: #444444; }
+        .slots-container { display: grid; gap: 12px; }
         
-        /* Admin Mode Styling */
-        .admin-active .slot { border-top: 1px solid #333; border-right: 1px solid #333; }
-        .btn-action { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: none; text-transform: uppercase; }
+        .slot { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 18px; border-radius: 14px; background: var(--surface); 
+            border-left: 6px solid var(--primary); transition: 0.2s;
+        }
+        
+        /* State Variations */
+        .slot.booked { border-left-color: var(--danger); background: #2a2a2a; opacity: 0.9; }
+        .slot.past { border-left-color: #555; opacity: 0.5; pointer-events: none; }
+        .slot.live { border-left-color: #3498db; box-shadow: 0 0 15px rgba(52, 152, 219, 0.2); }
+
+        .time-label { font-size: 16px; font-weight: 600; display: block; }
+        .status-label { font-size: 12px; font-weight: bold; margin-top: 4px; text-transform: uppercase; }
+        .customer-name { font-size: 11px; color: #aaa; margin-top: 2px; font-style: italic; }
+
+        .btn-action { 
+            padding: 10px 20px; border: none; border-radius: 25px; 
+            font-weight: bold; cursor: pointer; display: none; 
+            font-size: 12px; transition: transform 0.1s; 
+        }
         .admin-active .btn-action { display: block; }
+        .btn-action:active { transform: scale(0.9); }
         
         .btn-confirm { background: var(--primary); color: #000; }
         .btn-cancel { background: var(--danger); color: #fff; }
-        .status-label { font-weight: bold; font-size: 13px; margin-top: 5px; display: block; }
+
+        /* Animation for available slots */
+        .slot:not(.booked):not(.past) .status-label { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -41,73 +72,85 @@
     </div>
     <div class="header">
         <h1>KICKZONE</h1>
-        <p style="margin:5px 0; color:#666;">Live Availability</p>
+        <div id="liveIndicator" style="font-size: 12px; color: #666; margin-top: 5px;">LIVE AVAILABILITY</div>
     </div>
     
     <input type="date" id="datePicker">
-    <div id="slotsDisplay" class="slots-container">Connecting to Kickzone Database...</div>
+    <div id="slotsDisplay" class="slots-container">Initializing System...</div>
 </div>
 
 <script>
-    // 1. CONFIGURATION
+    // 1. CONFIG
     const firebaseConfig = { databaseURL: "https://kickzone-turf-default-rtdb.asia-southeast1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let isAdmin = false;
-    const adminPIN = "8590"; // Your New PIN
+    const adminPIN = "8590"; 
 
+    // Set Date Constraints
     const datePicker = document.getElementById('datePicker');
-    datePicker.value = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    datePicker.value = todayStr;
+    datePicker.setAttribute('min', todayStr); // Prevent past dates
 
     function unlockAdmin() {
-        const pass = prompt("Kickzone Admin PIN:");
+        const pass = prompt("Enter Staff PIN:");
         if (pass === adminPIN) {
             isAdmin = true;
             document.getElementById('mainContainer').classList.add('admin-active');
-            document.getElementById('adminBtn').innerText = "ADMIN MODE ACTIVE";
-            document.getElementById('adminBtn').style.backgroundColor = "var(--primary)";
-            document.getElementById('adminBtn').style.color = "black";
+            document.getElementById('adminBtn').innerText = "STAFF LOGGED IN";
+            document.getElementById('adminBtn').style.borderColor = "var(--primary)";
         } else {
-            alert("Unauthorized.");
+            alert("Access Denied.");
         }
     }
 
     function syncData() {
-        const date = datePicker.value;
-        const display = document.getElementById('slotsDisplay');
-        
-        db.ref('bookings/' + date).on('value', (snapshot) => {
-            const data = snapshot.val() || {};
-            renderSlots(data, date);
+        const selectedDate = datePicker.value;
+        db.ref('bookings/' + selectedDate).on('value', (snapshot) => {
+            renderSlots(snapshot.val() || {}, selectedDate);
         });
     }
 
-    function renderSlots(bookedData, date) {
+    function renderSlots(bookedData, selectedDate) {
         const display = document.getElementById('slotsDisplay');
         display.innerHTML = '';
         
+        const now = new Date();
+        const currentHour = now.getHours();
+        const isToday = selectedDate === todayStr;
+
         for (let h = 6; h < 24; h++) {
             const timeKey = h + ":00";
-            const isBooked = bookedData[timeKey];
+            const booking = bookedData[timeKey]; // Now expects an object {name: "..."} or null
+            const isBooked = !!booking;
             
-            const startHour = h > 12 ? h-12 : h;
+            // Format Time Display
+            const startH = h > 12 ? h-12 : h;
             const ampm = h >= 12 ? 'PM' : 'AM';
-            const endHour = (h+1) > 12 ? (h+1)-12 : (h+1);
+            const endH = (h+1) > 12 ? (h+1)-12 : (h+1);
             const endAmpm = (h+1) >= 12 && (h+1) < 24 ? 'PM' : 'AM';
-            
+
+            // Logic States
+            const isPast = isToday && h < currentHour;
+            const isLive = isToday && h === currentHour;
+
             const slotDiv = document.createElement('div');
-            slotDiv.className = `slot ${isBooked ? 'booked' : ''}`;
+            slotDiv.className = `slot ${isBooked ? 'booked' : ''} ${isPast ? 'past' : ''} ${isLive ? 'live' : ''}`;
+            
             slotDiv.innerHTML = `
                 <div>
-                    <strong>${startHour} ${ampm} - ${endHour} ${endAmpm}</strong>
+                    <span class="time-label">${startH} ${ampm} - ${endH} ${endAmpm}</span>
                     <span class="status-label" style="color:${isBooked ? 'var(--danger)' : 'var(--primary)'}">
-                        ${isBooked ? '● BOOKED' : '○ AVAILABLE'}
+                        ${isBooked ? '● Occupied' : '○ Available'} 
+                        ${isLive ? '<span style="color:#3498db; margin-left:10px;">[NOW]</span>' : ''}
                     </span>
+                    ${(isBooked && isAdmin) ? `<div class="customer-name">Client: ${booking.name || 'Anonymous'}</div>` : ''}
                 </div>
                 <button class="btn-action ${isBooked ? 'btn-cancel' : 'btn-confirm'}" 
-                        onclick="toggle('${date}', '${timeKey}', ${!!isBooked})">
-                    ${isBooked ? 'Cancel' : 'Confirm'}
+                        onclick="toggle('${selectedDate}', '${timeKey}', ${isBooked})">
+                    ${isBooked ? 'Clear' : 'Book'}
                 </button>`;
             display.appendChild(slotDiv);
         }
@@ -115,9 +158,19 @@
 
     function toggle(date, time, isBooked) {
         if (!isAdmin) return;
-        const msg = isBooked ? "Cancel this booking?" : "Confirm this slot as BOOKED?";
-        if(confirm(msg)) {
-            db.ref('bookings/' + date + '/' + time).set(isBooked ? null : true);
+        
+        if (isBooked) {
+            if(confirm("Cancel this booking?")) {
+                db.ref('bookings/' + date + '/' + time).set(null);
+            }
+        } else {
+            const client = prompt("Enter Customer Name:");
+            if (client) {
+                db.ref('bookings/' + date + '/' + time).set({
+                    name: client,
+                    timestamp: Date.now()
+                });
+            }
         }
     }
 
@@ -126,4 +179,3 @@
 </script>
 </body>
 </html>
-
