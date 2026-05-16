@@ -50,14 +50,33 @@
         }
         .slot.booked { border-left: 6px solid var(--danger); }
         .slot.available { border-left: 6px solid var(--primary); }
+        .slot.expired { border-left: 6px solid #444; opacity: 0.35; }
+        .slot.live-hour { border-left: 6px solid #3498db; box-shadow: 0 0 12px rgba(52, 152, 219, 0.25); }
 
         .time-text { font-size: 17px; font-weight: 800; display: block; letter-spacing: 0.5px; text-transform: lowercase; }
         .status-badge { font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 6px; margin-top: 8px; display: inline-block; }
+        
         .available .status-badge { background: rgba(46, 204, 113, 0.1); color: var(--primary); }
         .booked .status-badge { background: rgba(255, 71, 87, 0.1); color: var(--danger); }
+        .expired .status-badge { background: rgba(255, 255, 255, 0.05); color: #777; }
+        .live-hour .status-badge { background: rgba(52, 152, 219, 0.15); color: #3498db; }
 
-        .btn-action { padding: 12px 18px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; display: none; font-size: 12px; }
+        /* Visual Polish: Soft Pulse Glow for open available slots */
+        .slot.available .status-badge { animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        /* Visual Polish: Clean, Pill-Shaped Buttons */
+        .btn-action { 
+            padding: 10px 22px; border: none; border-radius: 25px; 
+            font-weight: 800; cursor: pointer; display: none; font-size: 12px; 
+            transition: transform 0.1s;
+        }
         .admin-active .btn-action { display: block; }
+        .btn-action:active { transform: scale(0.93); }
 
         .social-bar {
             position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
@@ -83,7 +102,7 @@
         <p>Football & Cricket Turf</p>
     </div>
     <input type="date" id="datePicker">
-    <div id="slotsDisplay" class="slots-container"></div>
+    <div id="slotsDisplay" class="slots-container">Connecting to Database...</div>
 </div>
 
 <div class="social-bar">
@@ -110,7 +129,9 @@
     const adminPIN = "8590"; 
 
     const datePicker = document.getElementById('datePicker');
-    datePicker.value = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    datePicker.value = todayStr;
+    datePicker.setAttribute('min', todayStr); // Smart Date Management: Restrict past calendar selections
 
     function unlockAdmin() {
         if (prompt("Staff PIN:") === adminPIN) {
@@ -119,10 +140,10 @@
             document.getElementById('adminBtn').innerText = "ADMIN ACTIVE";
             document.getElementById('adminBtn').style.background = "var(--primary)";
             document.getElementById('adminBtn').style.color = "black";
+            syncData(); // Re-trigger mapping to instantly render protected text fields
         }
     }
 
-    // Updated Time Formatter for "9 am to 10 am" style
     function formatTime(h) {
         let hour = h % 24;
         let ampm = (hour >= 12 && hour < 24) ? 'pm' : 'am';
@@ -144,24 +165,55 @@
         const display = document.getElementById('slotsDisplay');
         display.innerHTML = '';
         
+        const now = new Date();
+        const currentHour = now.getHours();
+        const isToday = datePicker.value === todayStr;
+        let targetedLiveElement = null;
+        
         for (let h = 6; h < 24; h++) {
             const timeKey = `${h}:00`;
             const booking = bookedData[timeKey];
             const isBooked = !!booking;
             
+            // Smart Date Management: Determine layout status timeline rules
+            let slotState = "available";
+            let displayBadge = "AVAILABLE";
+            
+            if (isBooked) {
+                slotState = "booked";
+                displayBadge = "OCCUPIED";
+            } else if (isToday && h < currentHour) {
+                slotState = "expired";
+                displayBadge = "EXPIRED";
+            } else if (isToday && h === currentHour) {
+                slotState = "live-hour";
+                displayBadge = "LIVE NOW";
+            }
+            
             const slotDiv = document.createElement('div');
-            slotDiv.className = `slot ${isBooked ? 'booked' : 'available'}`;
+            slotDiv.className = `slot ${slotState}`;
+            if (slotState === "live-hour") {
+                targetedLiveElement = slotDiv;
+            }
+            
             slotDiv.innerHTML = `
                 <div>
                     <span class="time-text">${formatTime(h)} to ${formatTime(h + 1)}</span>
-                    <span class="status-badge">${isBooked ? 'OCCUPIED' : 'AVAILABLE'}</span>
-                    ${(isBooked && isAdmin) ? `<div style="font-size:11px; color:#aaa; margin-top:8px;">Client: ${booking.name}</div>` : ''}
+                    <span class="status-badge">${displayBadge}</span>
+                    ${(isBooked && isAdmin) ? `<div style="font-size:11px; color:#aaa; margin-top:8px; font-weight:bold;">Client: ${booking.name || 'Staff Entry'}</div>` : ''}
                 </div>
                 <button class="btn-action" style="background:${isBooked ? 'var(--danger)' : 'var(--primary)'}" 
                         onclick="toggle('${timeKey}', ${isBooked})">
                     ${isBooked ? 'Clear' : 'Confirm'}
                 </button>`;
             display.appendChild(slotDiv);
+        }
+
+        // Auto-Scroll: Position screen center focused on live operational window
+        if (targetedLiveElement) {
+            setTimeout(() => {
+                targetedLiveElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
         }
     }
 
@@ -171,8 +223,11 @@
         if (isBooked) {
             if(confirm("Cancel this booking?")) ref.set(null);
         } else {
+            // Expanded Admin Data: Captures specific profile string identifiers
             const name = prompt("Customer Name:");
-            if(name) ref.set({ name: name, timestamp: Date.now() });
+            if(name) {
+                ref.set({ name: name, timestamp: Date.now() });
+            }
         }
     }
 
